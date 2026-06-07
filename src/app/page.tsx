@@ -12,29 +12,8 @@ interface Message {
   isError?: boolean;
 }
 
-// Icons
-const SSCLogoIcon = ({ className = "w-8 h-8" }) => (
-  <svg
-    viewBox="0 0 100 100"
-    className={`${className} object-contain`}
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M15 30H45C45 30 50 35 50 40C50 35 55 30 85 30V45C85 45 60 45 50 55C40 45 15 45 15 45V30Z"
-      fill="#E30A17"
-    />
-    <path
-      d="M15 50V70C15 85 30 95 50 95C70 95 85 85 85 70V50H60V70C60 75 55 80 50 80C45 80 40 75 40 70V50H15Z"
-      fill="#8A8C8E"
-    />
-    <path
-      d="M40 70C40 75 45 80 50 80V95C30 95 15 85 15 70V50H40V70Z"
-      fill="#717375"
-    />
-  </svg>
-);
 
+// Icons
 const SendIcon = () => (
   <svg
     width="20"
@@ -311,7 +290,11 @@ export default function ChatPage() {
         {/* Header */}
         <header className="h-[72px] shrink-0 sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-200 z-10 flex items-center justify-between px-6 lg:px-10">
           <div className="flex items-center gap-3.5">
-            <SSCLogoIcon className="w-10 h-10 flex-shrink-0" />
+            <img
+              src="/logo-ssc.png"
+              alt="SSC Logo"
+              className="w-10 h-10 flex-shrink-0 object-contain"
+            />
             <div className="flex flex-col">
               <h1 className="text-[16px] font-bold text-gray-900 leading-tight">
                 SSC Telkom University
