@@ -228,6 +228,15 @@ h1, h2, h3 {
   background: #9B1C1C;
 }
 
+/* Sembunyikan scrollbar tapi tetap bisa di-scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* ANIMASI CUSTOM */
 @keyframes fadeIn {
   from { opacity: 0; }

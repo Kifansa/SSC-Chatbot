@@ -71,55 +71,6 @@ const BotIcon = () => (
   </svg>
 );
 
-const PlusIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <line x1="12" y1="5" x2="12" y2="19" />
-    <line x1="5" y1="12" x2="19" y2="12" />
-  </svg>
-);
-
-const ArrowUpRightIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="text-gray-400 group-hover:text-[#E30A17] transition-colors"
-  >
-    <line x1="7" y1="17" x2="17" y2="7" />
-    <polyline points="7 7 17 7 17 17" />
-  </svg>
-);
-
-const UserIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
-
 const DocIcon = () => (
   <svg
     width="14"
@@ -143,7 +94,7 @@ function TypingIndicator() {
     <div className="flex w-full justify-start mb-8">
       <div className="flex gap-4 max-w-[90%] lg:max-w-[70%]">
         <div className="flex-shrink-0 mt-1">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#E30A17] flex items-center justify-center text-white shadow-sm">
+          <div className="w-9 h-9 rounded-full bg-[#E30A17] flex items-center justify-center text-white shadow-sm">
             <BotIcon />
           </div>
         </div>
@@ -194,16 +145,16 @@ function MessageBubble({
       style={{ animationDelay: `${Math.min(index * 20, 150)}ms` }}
     >
       <div
-        className={`flex gap-4 max-w-[90%] sm:max-w-[80%] lg:max-w-[72%] ${isUser ? "flex-row-reverse" : "flex-row"}`}
+        className={`flex gap-4 max-w-[90%] sm:max-w-[80%] lg:max-w-[75%] ${isUser ? "flex-row-reverse" : "flex-row"}`}
       >
         {/* Avatar */}
         <div className="flex-shrink-0 mt-1">
           {isUser ? (
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs shadow-sm">
+            <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs shadow-sm">
               U
             </div>
           ) : (
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#E30A17] flex items-center justify-center text-white shadow-sm">
+            <div className="w-9 h-9 rounded-full bg-[#E30A17] flex items-center justify-center text-white shadow-sm">
               <BotIcon />
             </div>
           )}
@@ -212,7 +163,7 @@ function MessageBubble({
         {/* Content */}
         <div className="flex flex-col min-w-0">
           <div
-            className={`px-7 py-6 rounded-[24px] text-[15px] sm:text-[15.5px] leading-relaxed space-y-3 shadow-sm max-w-full overflow-hidden ${
+            className={`px-6 py-5 rounded-[22px] text-[15px] leading-relaxed shadow-sm max-w-full overflow-hidden ${
               isUser
                 ? "bg-gray-100 text-gray-900 rounded-tr-sm"
                 : message.isError
@@ -283,20 +234,6 @@ export default function ChatPage() {
     e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
   };
 
-  const handleNewChat = () => {
-    setMessages([
-      {
-        id: "welcome",
-        role: "assistant",
-        content:
-          "Halo! Selamat datang di **Asisten Virtual SSC** Telkom University Surabaya. 👋\n\nSaya siap membantu kamu mendapatkan informasi seputar:\n- 📋 Prosedur & administrasi akademik\n- 📅 Jadwal dan deadline penting\n- 📝 Persyaratan dokumen\n- ❓ Pertanyaan umum layanan SSC\n\nSilakan ketik pertanyaanmu!",
-        timestamp: new Date(),
-      },
-    ]);
-    setInput("");
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
-  };
-
   const sendMessage = async () => {
     const question = input.trim();
     if (!question || isLoading) return;
@@ -363,67 +300,14 @@ export default function ChatPage() {
     "Prosedur legalisir ijazah?",
   ];
 
+  // Tampilkan chips hanya ketika percakapan masih di pesan awal
   const isOnlyWelcome = messages.length === 1;
 
   return (
     <div className="flex h-screen bg-white font-sans overflow-hidden text-gray-800">
-      {/* ===== SIDEBAR (DESKTOP ONLY) ===== */}
-      <aside className="hidden lg:flex flex-col w-[280px] xl:w-[320px] bg-[#F9F9F9] border-r border-gray-200 z-20 shrink-0 h-full">
-        {/* New Chat Button */}
-        <div className="p-5 pb-3">
-          <button
-            onClick={handleNewChat}
-            className="flex items-center gap-3 w-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm h-12 px-4 rounded-xl font-medium text-gray-800"
-          >
-            <PlusIcon />
-            <span className="text-[14px]">Percakapan Baru</span>
-          </button>
-        </div>
-
-        {/* Menu/History */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          <div>
-            <h3 className="text-[11px] font-bold text-gray-400 mb-3 uppercase tracking-wider">
-              Layanan Cepat
-            </h3>
-            <div className="flex flex-col gap-2">
-              {quickQuestions.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => {
-                    setInput(q);
-                    textareaRef.current?.focus();
-                  }}
-                  className="w-full text-left px-4 py-3 text-[13.5px] text-gray-700 bg-white border border-gray-200 hover:border-[#E30A17] hover:text-[#E30A17] hover:shadow-sm rounded-xl truncate transition-all group flex items-center justify-between"
-                >
-                  <span className="truncate pr-2">{q}</span>
-                  <ArrowUpRightIcon />
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* User Profile */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <div className="flex items-center gap-3 hover:bg-gray-200/60 p-3 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-gray-300">
-            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 shrink-0">
-              <UserIcon />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-[14px] font-semibold text-gray-800 leading-tight mb-0.5 truncate">
-                Mahasiswa Tel-U
-              </span>
-              <span className="text-[12px] text-gray-500 leading-tight truncate">
-                ssc@telkomuniversity.ac.id
-              </span>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* ===== MAIN CHAT AREA ===== */}
+      {/* ===== MAIN CHAT AREA (full width, no sidebar) ===== */}
       <main className="flex-1 flex flex-col min-w-0 bg-white h-screen relative">
+
         {/* Header */}
         <header className="h-[72px] shrink-0 sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-200 z-10 flex items-center justify-between px-6 lg:px-10">
           <div className="flex items-center gap-3.5">
@@ -449,25 +333,24 @@ export default function ChatPage() {
 
         {/* Ruang Percakapan */}
         <div className="flex-1 overflow-y-auto w-full scroll-smooth">
-          <div className="max-w-4xl mx-auto px-6 lg:px-10 py-10 flex flex-col">
-            {/* Daftar pesan */}
+          <div className="w-full px-6 lg:px-16 xl:px-24 py-10 flex flex-col">
             {messages.map((msg, i) => (
               <MessageBubble key={msg.id} message={msg} index={i} />
             ))}
 
-            {/* Typing indicator */}
             {isLoading && <TypingIndicator />}
 
             <div ref={messagesEndRef} className="h-8" />
           </div>
         </div>
 
-        {/* Area Input Container */}
-        <div className="bg-gradient-to-t from-white via-white to-transparent pt-4 pb-8 px-6 lg:px-10 shrink-0">
-          <div className="max-w-4xl mx-auto w-full relative">
-            {/* Quick questions (hanya saat welcome) */}
+        {/* Area Input */}
+        <div className="bg-gradient-to-t from-white via-white to-transparent pt-2 pb-6 px-6 lg:px-16 xl:px-24 shrink-0">
+          <div className="w-full">
+
+            {/* Quick-question chips — tampil hanya saat sesi baru */}
             {isOnlyWelcome && (
-              <div className="flex flex-wrap justify-center gap-2.5 mb-6">
+              <div className="flex flex-nowrap gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide">
                 {quickQuestions.map((q) => (
                   <button
                     key={q}
@@ -475,8 +358,9 @@ export default function ChatPage() {
                       setInput(q);
                       textareaRef.current?.focus();
                     }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white hover:border-[#E30A17] hover:text-[#E30A17] hover:bg-red-50 hover:shadow-sm transition-all text-sm font-medium text-gray-600 group"
+                    className="flex items-center gap-1 shrink-0 whitespace-nowrap px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-gray-200 bg-white hover:border-[#E30A17] hover:text-[#E30A17] hover:bg-red-50 hover:shadow-sm transition-all text-xs sm:text-sm font-medium text-gray-600"
                   >
+                    <span className="text-[#E30A17] text-xs">✦</span>
                     <span>{q}</span>
                   </button>
                 ))}
@@ -511,12 +395,13 @@ export default function ChatPage() {
             </div>
 
             {/* Footer note */}
-            <div className="flex items-center justify-center mt-4">
+            <div className="flex items-center justify-center mt-3">
               <span className="text-[12px] text-gray-400 text-center max-w-lg">
                 Asisten SSC dapat membuat kesalahan. Harap verifikasi informasi
                 akademik penting melalui portal resmi atau staf pelayanan.
               </span>
             </div>
+
           </div>
         </div>
       </main>
