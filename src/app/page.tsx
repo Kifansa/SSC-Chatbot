@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 
-// Konstanta & tipe
+// Types
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -12,26 +12,125 @@ interface Message {
   isError?: boolean;
 }
 
-// Ikon SVG inline
+// Icons
+const SSCLogoIcon = ({ className = "w-8 h-8" }) => (
+  <svg
+    viewBox="0 0 100 100"
+    className={`${className} object-contain`}
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M15 30H45C45 30 50 35 50 40C50 35 55 30 85 30V45C85 45 60 45 50 55C40 45 15 45 15 45V30Z"
+      fill="#E30A17"
+    />
+    <path
+      d="M15 50V70C15 85 30 95 50 95C70 95 85 85 85 70V50H60V70C60 75 55 80 50 80C45 80 40 75 40 70V50H15Z"
+      fill="#8A8C8E"
+    />
+    <path
+      d="M40 70C40 75 45 80 50 80V95C30 95 15 85 15 70V50H40V70Z"
+      fill="#717375"
+    />
+  </svg>
+);
+
 const SendIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <line x1="22" y1="2" x2="11" y2="13" />
     <polygon points="22 2 15 22 11 13 2 9 22 2" />
   </svg>
 );
 
 const BotIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="11" width="18" height="10" rx="2" />
-    <circle cx="12" cy="5" r="2" />
-    <path d="M12 7v4" />
-    <line x1="8" y1="16" x2="8" y2="16" strokeWidth="3" />
-    <line x1="16" y1="16" x2="16" y2="16" strokeWidth="3" />
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 8V4H8" />
+    <rect width="16" height="12" x="4" y="8" rx="2" />
+    <path d="M2 14h2" />
+    <path d="M20 14h2" />
+    <path d="M15 13v2" />
+    <path d="M9 13v2" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+const ArrowUpRightIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="text-gray-400 group-hover:text-[#E30A17] transition-colors"
+  >
+    <line x1="7" y1="17" x2="17" y2="7" />
+    <polyline points="7 7 17 7 17 17" />
+  </svg>
+);
+
+const UserIcon = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
   </svg>
 );
 
 const DocIcon = () => (
-  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
     <polyline points="14 2 14 8 20 8" />
     <line x1="16" y1="13" x2="8" y2="13" />
@@ -39,105 +138,126 @@ const DocIcon = () => (
   </svg>
 );
 
-// Sub-komponen: Typing Indicator
 function TypingIndicator() {
   return (
-    <div className="flex items-end gap-2.5 animate-fade-in">
-      {/* Avatar Bot */}
-      <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden"
-           style={{ background: "linear-gradient(135deg, #9B1C1C, #5C0F0F)" }}>
-        <div className="w-full h-full flex items-center justify-center text-white">
-          <BotIcon />
+    <div className="flex w-full justify-start mb-8">
+      <div className="flex gap-4 max-w-[90%] lg:max-w-[70%]">
+        <div className="flex-shrink-0 mt-1">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#E30A17] flex items-center justify-center text-white shadow-sm">
+            <BotIcon />
+          </div>
         </div>
-      </div>
-      {/* Bubble */}
-      <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3"
-           style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}>
-        <div className="flex gap-1.5 items-center h-4">
-          {[0, 1, 2].map((i) => (
-            <div key={i}
-                 className="w-2 h-2 rounded-full bg-telkom-red"
-                 style={{ animation: `bounceDot 1.2s ease-in-out infinite`, animationDelay: `${i * 180}ms` }} />
-          ))}
+        <div className="flex flex-col min-w-0">
+          <div className="px-6 py-5 rounded-2xl bg-white border border-gray-200 shadow-sm h-[60px] flex items-center rounded-tl-sm">
+            <div className="flex gap-1.5 items-center">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="w-2 h-2 rounded-full bg-gray-400"
+                  style={{
+                    animation: `pulseDot 1.4s ease-in-out infinite`,
+                    animationDelay: `${i * 160}ms`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// Sub-komponen: Bubble Pesan
-function MessageBubble({ message, index }: { message: Message; index: number }) {
+function MessageBubble({
+  message,
+  index,
+}: {
+  message: Message;
+  index: number;
+}) {
   const isUser = message.role === "user";
 
-  // Render markdown dasar: bold, italic, code
-  const renderContent = (text: string) =>
-    text
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+  const renderContent = (text: string) => {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, "<strong class='font-semibold'>$1</strong>")
       .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      .replace(/`([^`]+)`/g, '<code class="font-mono text-xs bg-black/8 px-1.5 py-0.5 rounded">$1</code>')
+      .replace(
+        /`([^`]+)`/g,
+        '<code class="bg-black/5 border border-black/10 px-1.5 py-0.5 rounded text-[13.5px] font-mono">$1</code>',
+      )
       .replace(/\n/g, "<br/>");
+  };
 
   return (
     <div
-      className={`flex items-end gap-2.5 ${isUser ? "flex-row-reverse" : "flex-row"} animate-slide-up`}
-      style={{ animationDelay: `${Math.min(index * 30, 200)}ms` }}
+      className={`flex w-full ${isUser ? "justify-end" : "justify-start"} mb-8 animate-slide-up`}
+      style={{ animationDelay: `${Math.min(index * 20, 150)}ms` }}
     >
-      {/* Avatar */}
-      <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold
-        ${isUser
-          ? "bg-gray-200 text-gray-600"
-          : "text-white"}`}
-           style={!isUser ? { background: "linear-gradient(135deg, #9B1C1C, #5C0F0F)" } : {}}>
-        {isUser ? "M" : <BotIcon />}
-      </div>
-
-      {/* Konten bubble */}
-      <div className={`flex flex-col gap-1.5 max-w-[78%] sm:max-w-[72%] ${isUser ? "items-end" : "items-start"}`}>
-        <div
-          className={`px-4 py-3 text-sm leading-relaxed
-            ${isUser
-              ? "text-white rounded-2xl rounded-br-sm"
-              : message.isError
-                ? "bg-red-50 text-red-800 border border-red-200 rounded-2xl rounded-bl-sm"
-                : "bg-white text-gray-800 border border-gray-100 rounded-2xl rounded-bl-sm"
-            }`}
-          style={isUser
-            ? { background: "linear-gradient(135deg, #9B1C1C, #7A1515)", boxShadow: "0 2px 10px rgba(155,28,28,0.25)" }
-            : message.isError
-              ? {}
-              : { boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }
-          }
-        >
-          <div
-            className="prose-chat whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: renderContent(message.content) }}
-          />
+      <div
+        className={`flex gap-4 max-w-[90%] sm:max-w-[80%] lg:max-w-[72%] ${isUser ? "flex-row-reverse" : "flex-row"}`}
+      >
+        {/* Avatar */}
+        <div className="flex-shrink-0 mt-1">
+          {isUser ? (
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs shadow-sm">
+              U
+            </div>
+          ) : (
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#E30A17] flex items-center justify-center text-white shadow-sm">
+              <BotIcon />
+            </div>
+          )}
         </div>
 
-        {/* Badge sumber dokumen */}
-        {message.sources && message.sources.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {message.sources.map((src, i) => (
-              <span key={i}
-                    className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border font-medium"
-                    style={{ background: "#FEF2F2", color: "#9B1C1C", borderColor: "#FECACA" }}>
-                <DocIcon />
-                {src}
-              </span>
-            ))}
+        {/* Content */}
+        <div className="flex flex-col min-w-0">
+          <div
+            className={`px-7 py-6 rounded-[24px] text-[15px] sm:text-[15.5px] leading-relaxed space-y-3 shadow-sm max-w-full overflow-hidden ${
+              isUser
+                ? "bg-gray-100 text-gray-900 rounded-tr-sm"
+                : message.isError
+                  ? "bg-red-50 border border-red-200 text-red-900 rounded-tl-sm"
+                  : "bg-white border border-gray-200 text-gray-800 rounded-tl-sm"
+            }`}
+          >
+            <div
+              className="prose-chat break-words"
+              dangerouslySetInnerHTML={{
+                __html: renderContent(message.content),
+              }}
+            />
           </div>
-        )}
 
-        {/* Timestamp */}
-        <span className="text-xs text-gray-400 px-1">
-          {message.timestamp.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
-        </span>
+          {message.sources && message.sources.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2.5">
+              {message.sources.map((src, i) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-xl border bg-white shadow-sm text-gray-600 border-gray-200 font-medium hover:bg-gray-50 transition-colors cursor-default"
+                >
+                  <DocIcon />
+                  <span className="truncate max-w-[200px]">{src}</span>
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div
+            className={`flex items-center gap-1.5 mt-1.5 px-1 ${isUser ? "justify-end" : "justify-start"}`}
+          >
+            <span className="text-[11px] text-gray-400 font-medium">
+              {message.timestamp.toLocaleTimeString("id-ID", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-// Komponen Utama
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -153,16 +273,28 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-scroll saat ada pesan baru
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Auto-resize textarea
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
     e.target.style.height = "auto";
-    e.target.style.height = Math.min(e.target.scrollHeight, 128) + "px";
+    e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
+  };
+
+  const handleNewChat = () => {
+    setMessages([
+      {
+        id: "welcome",
+        role: "assistant",
+        content:
+          "Halo! Selamat datang di **Asisten Virtual SSC** Telkom University Surabaya. 👋\n\nSaya siap membantu kamu mendapatkan informasi seputar:\n- 📋 Prosedur & administrasi akademik\n- 📅 Jadwal dan deadline penting\n- 📝 Persyaratan dokumen\n- ❓ Pertanyaan umum layanan SSC\n\nSilakan ketik pertanyaanmu!",
+        timestamp: new Date(),
+      },
+    ]);
+    setInput("");
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
   };
 
   const sendMessage = async () => {
@@ -171,7 +303,12 @@ export default function ChatPage() {
 
     setMessages((prev) => [
       ...prev,
-      { id: `u-${Date.now()}`, role: "user", content: question, timestamp: new Date() },
+      {
+        id: `u-${Date.now()}`,
+        role: "user",
+        content: question,
+        timestamp: new Date(),
+      },
     ]);
     setInput("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
@@ -201,7 +338,8 @@ export default function ChatPage() {
         {
           id: `err-${Date.now()}`,
           role: "assistant",
-          content: "Maaf, tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
+          content:
+            "Maaf, tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
           timestamp: new Date(),
           isError: true,
         },
@@ -228,109 +366,125 @@ export default function ChatPage() {
   const isOnlyWelcome = messages.length === 1;
 
   return (
-    <div className="flex flex-col h-screen bg-diagonal-pattern" style={{ backgroundColor: "#F8F4F0" }}>
-
-      {/* ===== HEADER ===== */}
-      <header className="relative z-10 flex-shrink-0"
-              style={{
-                background: "linear-gradient(135deg, #9B1C1C 0%, #6B1212 100%)",
-                boxShadow: "0 2px 20px rgba(155,28,28,0.35)"
-              }}>
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
-
-          {/* Logo & Shield */}
-          <div className="flex-shrink-0 flex items-center gap-2.5">
-            {/* Shield dekoratif */}
-            <div className="relative w-10 h-10 flex-shrink-0">
-              <div className="absolute inset-0 rounded-full bg-white/15 flex items-center justify-center">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
-                  <path d="M12 2L4 6v6c0 5.25 3.5 10.1 8 11.5C16.5 22.1 20 17.25 20 12V6l-8-4z" opacity="0.9"/>
-                  <path d="M9 12l2 2 4-4" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            </div>
-
-            {/* Teks branding */}
-            <div>
-              <div className="text-white font-bold text-sm leading-tight tracking-wide">
-                Asisten SSC
-              </div>
-              <div className="text-white/60 text-xs leading-tight font-medium">
-                Telkom University Surabaya
-              </div>
-            </div>
-          </div>
-
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* Status online */}
-          <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-white/80 text-xs font-medium">Online 24/7</span>
-          </div>
+    <div className="flex h-screen bg-white font-sans overflow-hidden text-gray-800">
+      {/* ===== SIDEBAR (DESKTOP ONLY) ===== */}
+      <aside className="hidden lg:flex flex-col w-[280px] xl:w-[320px] bg-[#F9F9F9] border-r border-gray-200 z-20 shrink-0 h-full">
+        {/* New Chat Button */}
+        <div className="p-5 pb-3">
+          <button
+            onClick={handleNewChat}
+            className="flex items-center gap-3 w-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm h-12 px-4 rounded-xl font-medium text-gray-800"
+          >
+            <PlusIcon />
+            <span className="text-[14px]">Percakapan Baru</span>
+          </button>
         </div>
 
-        {/* Garis dekoratif bawah */}
-        <div className="h-px w-full" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)" }} />
-      </header>
-
-      {/* ===== AREA PESAN ===== */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-4 py-5 flex flex-col gap-4">
-
-          {/* Info bar */}
-          {isOnlyWelcome && (
-            <div className="flex items-center gap-2 bg-white/80 border border-red-100 rounded-xl px-4 py-2.5 animate-fade-in"
-                 style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="#9B1C1C">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-              </svg>
-              <span className="text-xs text-gray-600">
-                Jawaban didasarkan pada dokumen resmi SSC. Bukan pengganti konsultasi langsung.
-              </span>
-            </div>
-          )}
-
-          {/* Daftar pesan */}
-          {messages.map((msg, i) => (
-            <MessageBubble key={msg.id} message={msg} index={i} />
-          ))}
-
-          {/* Typing indicator */}
-          {isLoading && <TypingIndicator />}
-
-          <div ref={messagesEndRef} />
-        </div>
-      </main>
-
-      {/* ===== AREA INPUT ===== */}
-      <footer className="flex-shrink-0 bg-white border-t border-gray-200"
-              style={{ boxShadow: "0 -2px 16px rgba(0,0,0,0.06)" }}>
-        <div className="max-w-3xl mx-auto px-4 pt-3 pb-4">
-
-          {/* Quick questions (hanya saat welcome) */}
-          {isOnlyWelcome && (
-            <div className="flex flex-wrap gap-2 mb-3">
+        {/* Menu/History */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          <div>
+            <h3 className="text-[11px] font-bold text-gray-400 mb-3 uppercase tracking-wider">
+              Layanan Cepat
+            </h3>
+            <div className="flex flex-col gap-2">
               {quickQuestions.map((q) => (
-                <button key={q}
-                        onClick={() => { setInput(q); textareaRef.current?.focus(); }}
-                        className="text-xs px-3 py-1.5 rounded-full border font-medium transition-all duration-150 hover:-translate-y-0.5"
-                        style={{
-                          background: "#FEF2F2",
-                          color: "#9B1C1C",
-                          borderColor: "#FECACA"
-                        }}>
-                  {q}
+                <button
+                  key={q}
+                  onClick={() => {
+                    setInput(q);
+                    textareaRef.current?.focus();
+                  }}
+                  className="w-full text-left px-4 py-3 text-[13.5px] text-gray-700 bg-white border border-gray-200 hover:border-[#E30A17] hover:text-[#E30A17] hover:shadow-sm rounded-xl truncate transition-all group flex items-center justify-between"
+                >
+                  <span className="truncate pr-2">{q}</span>
+                  <ArrowUpRightIcon />
                 </button>
               ))}
             </div>
-          )}
+          </div>
+        </div>
 
-          {/* Input bar */}
-          <div className="flex items-end gap-2.5">
-            <div className="flex-1 flex items-end gap-2 rounded-2xl border bg-white px-4 py-2.5 transition-all duration-200 focus-within:border-telkom-red"
-                 style={{ borderColor: "#E5E7EB", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+        {/* User Profile */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <div className="flex items-center gap-3 hover:bg-gray-200/60 p-3 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-gray-300">
+            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 shrink-0">
+              <UserIcon />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[14px] font-semibold text-gray-800 leading-tight mb-0.5 truncate">
+                Mahasiswa Tel-U
+              </span>
+              <span className="text-[12px] text-gray-500 leading-tight truncate">
+                ssc@telkomuniversity.ac.id
+              </span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* ===== MAIN CHAT AREA ===== */}
+      <main className="flex-1 flex flex-col min-w-0 bg-white h-screen relative">
+        {/* Header */}
+        <header className="h-[72px] shrink-0 sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-200 z-10 flex items-center justify-between px-6 lg:px-10">
+          <div className="flex items-center gap-3.5">
+            <SSCLogoIcon className="w-10 h-10 flex-shrink-0" />
+            <div className="flex flex-col">
+              <h1 className="text-[16px] font-bold text-gray-900 leading-tight">
+                SSC Telkom University
+              </h1>
+              <span className="text-[13px] text-gray-500 font-medium leading-tight">
+                Student Service Center
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-3.5 py-1.5 shadow-sm">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              <span className="text-[11px] font-bold text-green-700 tracking-wider uppercase">
+                Online
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* Ruang Percakapan */}
+        <div className="flex-1 overflow-y-auto w-full scroll-smooth">
+          <div className="max-w-4xl mx-auto px-6 lg:px-10 py-10 flex flex-col">
+            {/* Daftar pesan */}
+            {messages.map((msg, i) => (
+              <MessageBubble key={msg.id} message={msg} index={i} />
+            ))}
+
+            {/* Typing indicator */}
+            {isLoading && <TypingIndicator />}
+
+            <div ref={messagesEndRef} className="h-8" />
+          </div>
+        </div>
+
+        {/* Area Input Container */}
+        <div className="bg-gradient-to-t from-white via-white to-transparent pt-4 pb-8 px-6 lg:px-10 shrink-0">
+          <div className="max-w-4xl mx-auto w-full relative">
+            {/* Quick questions (hanya saat welcome) */}
+            {isOnlyWelcome && (
+              <div className="flex flex-wrap justify-center gap-2.5 mb-6">
+                {quickQuestions.map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => {
+                      setInput(q);
+                      textareaRef.current?.focus();
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white hover:border-[#E30A17] hover:text-[#E30A17] hover:bg-red-50 hover:shadow-sm transition-all text-sm font-medium text-gray-600 group"
+                  >
+                    <span>{q}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Input bar */}
+            <div className="relative flex items-end gap-3 bg-white border border-gray-300 rounded-[24px] shadow-sm focus-within:ring-4 focus-within:ring-red-50 focus-within:border-[#E30A17] transition-all p-2 pl-6">
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -338,39 +492,34 @@ export default function ChatPage() {
                 onKeyDown={handleKeyDown}
                 rows={1}
                 disabled={isLoading}
-                placeholder="Ketik pertanyaanmu… (Enter untuk kirim, Shift+Enter baris baru)"
-                className="flex-1 resize-none bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none leading-relaxed max-h-32"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                placeholder="Ketik pesan untuk Asisten SSC..."
+                className="flex-1 max-h-[150px] min-h-[44px] resize-none bg-transparent py-3 text-[15px] text-gray-900 placeholder-gray-500 focus:outline-none leading-relaxed"
               />
+
+              {/* Tombol kirim */}
+              <button
+                onClick={sendMessage}
+                disabled={!input.trim() || isLoading}
+                className="h-11 w-11 shrink-0 rounded-full flex items-center justify-center transition-all bg-[#E30A17] hover:bg-red-700 text-white shadow-sm disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none mb-0.5 mr-0.5"
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <SendIcon />
+                )}
+              </button>
             </div>
 
-            {/* Tombol kirim */}
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim() || isLoading}
-              className="w-11 h-11 flex-shrink-0 rounded-xl text-white flex items-center justify-center transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{
-                background: input.trim() && !isLoading
-                  ? "linear-gradient(135deg, #9B1C1C, #7A1515)"
-                  : "#D1D5DB",
-                boxShadow: input.trim() && !isLoading
-                  ? "0 3px 12px rgba(155,28,28,0.35)"
-                  : "none",
-              }}
-            >
-              {isLoading
-                ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                : <SendIcon />
-              }
-            </button>
+            {/* Footer note */}
+            <div className="flex items-center justify-center mt-4">
+              <span className="text-[12px] text-gray-400 text-center max-w-lg">
+                Asisten SSC dapat membuat kesalahan. Harap verifikasi informasi
+                akademik penting melalui portal resmi atau staf pelayanan.
+              </span>
+            </div>
           </div>
-
-          {/* Footer note */}
-          <p className="text-center text-xs text-gray-400 mt-2.5">
-            SSC Telkom University Surabaya · Layanan fisik: Senin–Jumat, 08.00–16.00 WIB
-          </p>
         </div>
-      </footer>
+      </main>
     </div>
   );
 }
