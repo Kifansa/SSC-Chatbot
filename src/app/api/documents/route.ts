@@ -18,7 +18,19 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ success: true, data: data || [] });
+    // Mengambil ukuran tabel ssc_documents
+    const { data: sizeData, error: sizeError } = await supabaseAdmin.rpc(
+      "get_table_size",
+      { table_name: "ssc_documents" }
+    );
+
+    const dbSize = sizeError ? 0 : (sizeData || 0);
+
+    return NextResponse.json({ 
+      success: true, 
+      data: data || [],
+      db_size: dbSize 
+    });
   } catch (error) {
     console.error("Documents GET error:", error);
     return NextResponse.json(
