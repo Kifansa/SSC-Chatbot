@@ -486,6 +486,7 @@ function ModernAdminDashboard() {
   } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dbSize, setDbSize] = useState<number>(0);
 
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -502,7 +503,12 @@ function ModernAdminDashboard() {
     try {
       const res = await fetch("/api/documents");
       const data = await res.json();
-      setDocuments(data.documents || []);
+      if (data.success) {
+        setDocuments(data.data || []);
+        setDbSize(data.db_size || 0);
+      } else {
+        setDocuments(data.documents || data.data || []);
+      }
     } catch (err) {
       showAlert("error", "Gagal memuat daftar dokumen.");
     } finally {
@@ -540,7 +546,7 @@ function ModernAdminDashboard() {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) { showAlert("warning", "Pilih file PDF terlebih dahulu."); return; }
     setIsUploading(true);
     setUploadResult(null);
 
@@ -564,23 +570,25 @@ function ModernAdminDashboard() {
       const fd = new FormData();
       fd.append("file", selectedFile);
       fd.append("description", description);
-
       const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
       clearInterval(interval);
+      const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Gagal mengunggah dokumen");
-
-      setUploadProgress({ step: "Selesai!", percent: 100 });
-      setUploadResult(data.data);
-      showAlert("success", "Dokumen berhasil diunggah dan diproses.");
-      setSelectedFile(null);
-      setDescription("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      loadDocuments();
+      if (res.ok && data.success) {
+        setUploadProgress({ step: "Selesai!", percent: 100 });
+        setUploadResult(data.data);
+        showAlert("success", `Dokumen "${data.data.file_name}" berhasil diproses!`);
+        setSelectedFile(null);
+        setDescription("");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        await loadDocuments();
+      } else {
+        showAlert("error", data.error || "Gagal mengunggah dokumen");
+        setUploadProgress({ step: "", percent: 0 });
+      }
     } catch (err: any) {
       clearInterval(interval);
-      showAlert("error", err.message);
+      showAlert("error", "Koneksi terputus saat upload.");
       setUploadProgress({ step: "", percent: 0 });
     } finally {
       setIsUploading(false);
@@ -591,19 +599,15 @@ function ModernAdminDashboard() {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/documents?doc_id=${deleteTarget.doc_id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/documents?doc_id=${deleteTarget.doc_id}`, { method: "DELETE" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal menghapus dokumen");
-      showAlert("success", "Dokumen berhasil dihapus.");
-      setDeleteTarget(null);
-      loadDocuments();
-    } catch (err: any) {
-      showAlert("error", err.message);
-    } finally {
-      setIsDeleting(false);
-    }
+      if (res.ok && data.success) {
+        showAlert("success", `Dokumen "${deleteTarget.file_name}" berhasil dihapus.`);
+        setDocuments((prev) => prev.filter((d) => d.doc_id !== deleteTarget.doc_id));
+        setDeleteTarget(null);
+      } else { showAlert("error", data.error || "Gagal menghapus dokumen"); }
+    } catch { showAlert("error", "Koneksi terputus saat menghapus."); }
+    finally { setIsDeleting(false); }
   };
 
   const handleSaveEdit = async (newDesc: string) => {
@@ -616,15 +620,13 @@ function ModernAdminDashboard() {
         body: JSON.stringify({ description: newDesc }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal menyimpan perubahan");
-      showAlert("success", "Deskripsi berhasil diperbarui.");
-      setEditTarget(null);
-      loadDocuments();
-    } catch (err: any) {
-      showAlert("error", err.message);
-    } finally {
-      setIsSavingEdit(false);
-    }
+      if (res.ok && data.success) {
+        showAlert("success", "Deskripsi berhasil diperbarui.");
+        setDocuments((prev) => prev.map((d) => d.doc_id === editTarget.doc_id ? { ...d, description: newDesc } : d));
+        setEditTarget(null);
+      } else { showAlert("error", data.error || "Gagal memperbarui deskripsi"); }
+    } catch { showAlert("error", "Koneksi terputus saat menyimpan."); }
+    finally { setIsSavingEdit(false); }
   };
 
   const formatBytes = (bytes: number) => {
@@ -635,15 +637,7 @@ function ModernAdminDashboard() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   };
 
-  const formatDate = (iso: string) => {
-    const d = new Date(iso);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    const hour = String(d.getHours()).padStart(2, "0");
-    const minute = String(d.getMinutes()).padStart(2, "0");
-    return `${day}/${month}/${year} ${hour}:${minute}`;
-  };
+  const formatDate = (s: string) => new Date(s).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
   const totalChunks = documents.reduce((acc, doc) => acc + doc.chunk_count, 0);
 
@@ -793,20 +787,40 @@ function ModernAdminDashboard() {
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       >
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <polyline points="22 4 12 14.01 9 11.01" />
+                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
                       </svg>
                     </div>
-                    <div className="pt-0.5">
+
+                    <div className="pt-0.5 min-w-0 w-full">
                       <p className="text-[13px] font-bold text-gray-500 mb-1 tracking-wide uppercase">
-                        System Status
+                        Sisa Storage
                       </p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-sm"></div>
-                        <p className="text-[17px] font-bold text-green-700 leading-none">
-                          Online & Ready
-                        </p>
+
+                      {/* Logika menghitung sisa storage. Asumsi limit Supabase Free: 500 MB */}
+                      <p className="text-3xl font-black text-gray-900 leading-none mt-2 truncate">
+                        {formatBytes(Math.max(0, (475 * 1024 * 1024) - dbSize))}
+                      </p>
+
+                      {/* Detail persentase dan progress bar */}
+                      <div className="mt-3">
+                        <div className="flex justify-between items-center text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                          <span>Terpakai: {formatBytes(dbSize)}</span>
+                          <span>Max: 475 MB</span>
+                        </div>
+
+                        {/* Progress Bar Indikator */}
+                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden shadow-inner">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${(dbSize / (500 * 1024 * 1024)) > 0.8 ? 'bg-red-500' : 'bg-green-500'
+                              }`}
+                            style={{ width: `${Math.min(100, (dbSize / (500 * 1024 * 1024)) * 100)}%` }}
+                          ></div>
+                        </div>
                       </div>
                     </div>
                   </div>
