@@ -101,7 +101,6 @@ function isRequestingDocument(question: string): boolean {
   return keywords.some((kw) => lower.includes(kw));
 }
 
-
 function cleanQueryForEmbedding(question: string): string {
   let cleaned = question;
   const noisePhrases = [
@@ -151,8 +150,6 @@ export async function POST(request: NextRequest) {
 
     const { systemPrompt, threshold, matchCount } = await getActiveSettings();
 
-    // Teks yang dipakai untuk embedding sudah "dibersihkan" dari noise
-    // permintaan link/sumber, supaya vector search tetap akurat
     const queryForEmbedding = cleanQueryForEmbedding(trimmedQuestion);
 
     let queryEmbedding: number[];
