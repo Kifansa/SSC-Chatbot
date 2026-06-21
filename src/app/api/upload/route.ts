@@ -5,14 +5,12 @@ import { supabaseAdmin } from "@/lib/supabase";
 import pdfParse from "pdf-parse";
 import { randomUUID } from "crypto";
 
-// Konfigurasi batas maksimum ukuran body request (10MB)
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
-// Inisialisasi model embedding
 const embeddings = new HuggingFaceInferenceEmbeddings({
   apiKey: process.env.HUGGINGFACEHUB_API_KEY!,
   model: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
@@ -23,31 +21,30 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    // Terima dan validasi data form
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const description = (formData.get("description") as string) || "";
+    const driveLink = (formData.get("drive_link") as string) || "";
 
     if (!file) {
-      return NextResponse.json(
-        { error: "Tidak ada file yang diunggah." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Tidak ada file yang diunggah." }, { status: 400 });
     }
 
-    // Validasi tipe file
     if (file.type !== "application/pdf") {
-      return NextResponse.json(
-        { error: "Hanya file PDF yang diterima." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Hanya file PDF yang diterima." }, { status: 400 });
     }
 
-    // Validasi ukuran file (maksimum 10MB)
     const MAX_SIZE = 10 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
         { error: "Ukuran file melebihi batas maksimum 10MB." },
+        { status: 400 }
+      );
+    }
+
+    if (driveLink && !/^https:\/\/(drive\.google\.com|docs\.google\.com)\//.test(driveLink)) {
+      return NextResponse.json(
+        { error: "Link Google Drive tidak valid. Harus diawali https://drive.google.com/" },
         { status: 400 }
       );
     }
@@ -61,17 +58,13 @@ export async function POST(request: NextRequest) {
       pdfData = await pdfParse(buffer);
     } catch (parseError) {
       return NextResponse.json(
-        {
-          error:
-            "Gagal membaca file PDF. Pastikan file tidak rusak atau terenkripsi.",
-        },
+        { error: "Gagal membaca file PDF. Pastikan file tidak rusak atau terenkripsi." },
         { status: 422 }
       );
     }
 
     const rawText = pdfData.text.trim();
 
-    // Validasi konten teks (cegah PDF scan/gambar)
     if (!rawText || rawText.length < 50) {
       return NextResponse.json(
         {
@@ -82,7 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Pemecahan teks menjadi chunks
+    // Pemecahan teks menjadi chunks ~700 karakter
     const textSplitter = new RecursiveCharacterTextSplitter({
       chunkSize: 700,
       chunkOverlap: 100,
@@ -98,11 +91,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buat ID unik untuk dokumen ini
     const docId = randomUUID();
     const fileName = file.name;
 
-    // LANGKAH 6: Generate embeddings untuk setiap chunk
+    // Generate embeddings untuk setiap chunk
     const chunkTexts = chunks.map((chunk) => chunk.pageContent);
 
     let embeddingVectors: number[][];
@@ -111,15 +103,12 @@ export async function POST(request: NextRequest) {
     } catch (embError: any) {
       console.error("Embedding error:", embError);
       return NextResponse.json(
-        {
-          error:
-            "Gagal memproses embedding. Kemungkinan API Hugging Face sedang tidak tersedia.",
-        },
+        { error: "Gagal memproses embedding. Kemungkinan API Hugging Face sedang tidak tersedia." },
         { status: 503 }
       );
     }
 
-    // Susun data untuk disimpan ke Supabase
+    // Susun data untuk disimpan, termasuk drive_link dan status final "ready"
     const rowsToInsert = chunks.map((chunk, index) => ({
       doc_id: docId,
       content: chunk.pageContent,
@@ -131,23 +120,17 @@ export async function POST(request: NextRequest) {
         page_count: pdfData.numpages,
       },
       embedding: embeddingVectors[index],
+      drive_link: driveLink || null,
+      status: "ready",
     }));
 
-    // Simpan ke Supabase dalam batch
     const BATCH_SIZE = 20;
     for (let i = 0; i < rowsToInsert.length; i += BATCH_SIZE) {
       const batch = rowsToInsert.slice(i, i + BATCH_SIZE);
-      const { error: insertError } = await supabaseAdmin
-        .from("ssc_documents")
-        .insert(batch);
+      const { error: insertError } = await supabaseAdmin.from("ssc_documents").insert(batch);
 
       if (insertError) {
-        // Rollback: hapus chunks yang sudah tersimpan jika ada error
-        await supabaseAdmin
-          .from("ssc_documents")
-          .delete()
-          .eq("doc_id", docId);
-
+        await supabaseAdmin.from("ssc_documents").delete().eq("doc_id", docId);
         console.error("Supabase insert error:", insertError);
         return NextResponse.json(
           { error: "Gagal menyimpan dokumen ke database." },
@@ -156,7 +139,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Kembalikan respons sukses
     return NextResponse.json(
       {
         success: true,
@@ -167,6 +149,7 @@ export async function POST(request: NextRequest) {
           chunk_count: chunks.length,
           page_count: pdfData.numpages,
           character_count: rawText.length,
+          drive_link: driveLink || null,
         },
       },
       { status: 201 }
@@ -174,9 +157,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Upload API error:", error);
     return NextResponse.json(
-      {
-        error: "Terjadi kesalahan server yang tidak terduga. Silakan coba lagi.",
-      },
+      { error: "Terjadi kesalahan server yang tidak terduga. Silakan coba lagi." },
       { status: 500 }
     );
   }
