@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
-// GET /api/documents
-// Mengambil daftar ringkasan semua dokumen, diurutkan dari yang terbaru
 export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
@@ -18,30 +16,23 @@ export async function GET() {
       );
     }
 
-    // Mengambil ukuran tabel ssc_documents
     const { data: sizeData, error: sizeError } = await supabaseAdmin.rpc(
       "get_table_size",
       { table_name: "ssc_documents" }
     );
-
     const dbSize = sizeError ? 0 : (sizeData || 0);
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       data: data || [],
-      db_size: dbSize 
+      db_size: dbSize,
     });
   } catch (error) {
     console.error("Documents GET error:", error);
-    return NextResponse.json(
-      { error: "Terjadi kesalahan server." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Terjadi kesalahan server." }, { status: 500 });
   }
 }
 
-// DELETE /api/documents?doc_id=xxxx
-// Menghapus SEMUA chunk yang terkait dengan sebuah dokumen berdasarkan doc_id
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -54,7 +45,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Verifikasi dokumen ada sebelum dihapus
     const { data: existingChunks, error: checkError } = await supabaseAdmin
       .from("ssc_documents")
       .select("id")
@@ -62,10 +52,7 @@ export async function DELETE(request: NextRequest) {
       .limit(1);
 
     if (checkError) {
-      return NextResponse.json(
-        { error: "Gagal memeriksa dokumen." },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Gagal memeriksa dokumen." }, { status: 500 });
     }
 
     if (!existingChunks || existingChunks.length === 0) {
@@ -75,7 +62,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Hapus semua chunk yang memiliki doc_id ini
     const { error: deleteError, count } = await supabaseAdmin
       .from("ssc_documents")
       .delete({ count: "exact" })
@@ -96,15 +82,12 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error) {
     console.error("Documents DELETE error:", error);
-    return NextResponse.json(
-      { error: "Terjadi kesalahan server." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Terjadi kesalahan server." }, { status: 500 });
   }
 }
 
 // PATCH /api/documents?doc_id=xxxx
-// Update metadata (deskripsi) sebuah dokumen berdasarkan doc_id
+// Body bisa berisi: { description?: string, drive_link?: string }
 export async function PATCH(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -118,27 +101,52 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { description } = body;
+    const { description, drive_link } = body;
 
-    if (typeof description !== "string") {
+    if (description === undefined && drive_link === undefined) {
       return NextResponse.json(
-        { error: "Field 'description' harus berupa string." },
+        { error: "Sertakan minimal salah satu field: description atau drive_link." },
         { status: 400 }
       );
     }
 
-    // Update metadata.description untuk semua chunk dengan doc_id ini
-    const { error: updateError } = await supabaseAdmin.rpc(
-      "update_document_description",
-      {
-        p_doc_id: docId,
-        p_description: description,
+    // Validasi format link Google Drive (jika diisi)
+    if (drive_link !== undefined && drive_link !== null && drive_link !== "") {
+      const isValidDriveLink =
+        /^https:\/\/(drive\.google\.com|docs\.google\.com)\//.test(drive_link);
+      if (!isValidDriveLink) {
+        return NextResponse.json(
+          { error: "Link harus berupa URL Google Drive yang valid (diawali https://drive.google.com/ atau https://docs.google.com/)." },
+          { status: 400 }
+        );
       }
-    );
+    }
 
-    // Fallback jika RPC belum dibuat: update langsung lewat query
-    if (updateError) {
-      // Ambil semua baris dulu, update metadata-nya satu per satu
+    // Update drive_link (kolom langsung, berlaku untuk SEMUA chunk doc ini)
+    if (drive_link !== undefined) {
+      const { error: linkError } = await supabaseAdmin
+        .from("ssc_documents")
+        .update({ drive_link: drive_link || null })
+        .eq("doc_id", docId);
+
+      if (linkError) {
+        console.error("Update drive_link error:", linkError);
+        return NextResponse.json(
+          { error: "Gagal menyimpan link Google Drive." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Update description (di dalam metadata JSONB, per baris)
+    if (description !== undefined) {
+      if (typeof description !== "string") {
+        return NextResponse.json(
+          { error: "Field 'description' harus berupa string." },
+          { status: 400 }
+        );
+      }
+
       const { data: rows, error: fetchError } = await supabaseAdmin
         .from("ssc_documents")
         .select("id, metadata")
@@ -163,13 +171,10 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Deskripsi dokumen berhasil diperbarui.",
+      message: "Dokumen berhasil diperbarui.",
     });
   } catch (error) {
     console.error("Documents PATCH error:", error);
-    return NextResponse.json(
-      { error: "Terjadi kesalahan server." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Terjadi kesalahan server." }, { status: 500 });
   }
 }
